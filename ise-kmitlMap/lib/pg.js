@@ -51,7 +51,7 @@ export async function getPool() {
   if (pool) return pool;
   let Pool;
   try {
-    const mod = await import(/* webpackIgnore: true */ /* turbopackIgnore: true */ "pg");
+    const mod = await import("pg");
     Pool = (mod.default || mod).Pool;
   } catch (e) {
     throw new Error("ต้องติดตั้งไดรเวอร์ฐานข้อมูลก่อนใช้งานโหมด PostgreSQL — รัน: npm install pg");

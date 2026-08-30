@@ -1,5 +1,7 @@
 // พร็อกซีข้อมูล OpenStreetMap (Overpass) ฝั่งเซิร์ฟเวอร์
 // เรียกจากเซิร์ฟเวอร์เสถียรกว่าเรียกจากเบราว์เซอร์ตรง และ cache ซ้ำได้
+// หมายเหตุ: บน Vercel แต่ละ instance มี cache ของตัวเอง และหายเมื่อ instance ถูกรีไซเคิล
+// จึงพึ่ง Cache-Control header ของ CDN เป็นหลัก
 
 const OVERPASS_MIRRORS = [
   "https://overpass-api.de/api/interpreter",
@@ -33,22 +35,21 @@ async function fetchOverpass(query, timeoutMs = 22000) {
 const EMPTY = { trees: [], buildings: [], toilets: [], green: [], cameras: [], crossings: [], treeRows: [], coveredWays: [] };
 
 // อาคาร / ห้องน้ำ / พื้นที่สีเขียว / ทางเชื่อมมีหลังคา
-export async function osmHandler(req, res) {
+export async function osmData(raw) {
   let bbox = DEFAULT_BBOX;
-  const raw = req.query.bbox;
   if (raw) {
     const parts = String(raw).split(",").map(Number);
     if (parts.length === 4 && parts.every((x) => Number.isFinite(x))) bbox = parts;
   }
 
   const ck = "osm:" + bbox.join(",");
-  if (cache.has(ck)) return res.json(cache.get(ck));
+  if (cache.has(ck)) return { status: 200, body: cache.get(ck), cacheable: true };
 
   const bb = bbox.join(",");
   const query = `[out:json][timeout:25];(node["amenity"="toilets"](${bb});way["amenity"="toilets"](${bb});way["leisure"="park"](${bb});way["landuse"="grass"](${bb});way["natural"="water"](${bb}););out center;(way["highway"]["covered"~"yes|arcade"](${bb});way["highway"="footway"]["bridge"](${bb});way["man_made"="bridge"](${bb}););out geom;`;
 
   const json = await fetchOverpass(query);
-  if (!json) return res.json({ ok: false, ...EMPTY, error: "overpass ไม่ตอบ" });
+  if (!json) return { status: 200, body: { ok: false, ...EMPTY, error: "overpass ไม่ตอบ" } };
 
   const buildings = [], toilets = [], green = [], coveredWays = [];
   for (const el of json.elements || []) {
@@ -69,20 +70,20 @@ export async function osmHandler(req, res) {
 
   const out = { ok: true, ...EMPTY, buildings, toilets, green, coveredWays, count: { toilets: toilets.length, buildings: buildings.length } };
   cache.set(ck, out);
-  res.set("Cache-Control", "public, max-age=3600").json(out);
+  return { status: 200, body: out, cacheable: true, maxAge: 3600 };
 }
 
 // โครงข่ายทางเดิน — ใช้สร้างกราฟสำหรับคำนวณเส้นทาง
-export async function walknetHandler(req, res) {
-  const bbox = String(req.query.bbox || "").trim();
-  if (!/^[\d.,\s-]+$/.test(bbox)) return res.status(400).json({ error: "bbox ไม่ถูกต้อง" });
+export async function walknetData(raw) {
+  const bbox = String(raw || "").trim();
+  if (!/^[\d.,\s-]+$/.test(bbox)) return { status: 400, body: { error: "bbox ไม่ถูกต้อง" } };
 
   const ck = "walk:v3:" + bbox;
-  if (cache.has(ck)) return res.json(cache.get(ck));
+  if (cache.has(ck)) return { status: 200, body: cache.get(ck), cacheable: true, maxAge: 86400 };
 
   const query = `[out:json][timeout:20];way["highway"~"footway|path|pedestrian|living_street|residential|unclassified|service|steps|primary|secondary|tertiary|primary_link|secondary_link|tertiary_link"](${bbox});out geom;`;
   const json = await fetchOverpass(query, 20000);
-  if (!json) return res.status(502).json({ error: "Overpass ไม่ตอบสนอง ลองใหม่อีกครั้ง" });
+  if (!json) return { status: 502, body: { error: "Overpass ไม่ตอบสนอง ลองใหม่อีกครั้ง" } };
 
   const ways = [];
   for (const el of json.elements || []) {
@@ -90,9 +91,15 @@ export async function walknetHandler(req, res) {
       ways.push(el.geometry.map((p) => [p.lon, p.lat]));
     }
   }
-  if (!ways.length) return res.status(502).json({ error: "ไม่พบโครงข่ายทางเดินในพื้นที่นี้" });
+  if (!ways.length) return { status: 502, body: { error: "ไม่พบโครงข่ายทางเดินในพื้นที่นี้" } };
 
   const out = { ways, count: ways.length };
   cache.set(ck, out);
-  res.set("Cache-Control", "public, max-age=86400").json(out);
+  return { status: 200, body: out, cacheable: true, maxAge: 86400 };
+}
+
+export function toResponse({ status, body, cacheable, maxAge }) {
+  const headers = {};
+  if (cacheable) headers["Cache-Control"] = `public, max-age=${maxAge || 3600}`;
+  return Response.json(body, { status, headers });
 }

@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // API ทั้งหมดอยู่ที่ backend service — frontend ส่งต่อผ่าน app/api/[...path]/route.js
-  // ซึ่งอ่าน BACKEND_URL ตอน request จริง (เปลี่ยนค่าได้โดยไม่ต้อง build ใหม่)
-  output: "standalone",
+  // API ทั้งหมดอยู่ใน app/api/* (route handlers) — deploy บน Vercel ได้เลย
+  // ไม่ใช้ output:"standalone" เพราะ Vercel จัดการ build output ให้เอง
+  // ถ้าจะกลับไปรันบน Docker/VM ให้เปิดบรรทัดล่างนี้แทน
+  // output: "standalone",
+  outputFileTracingIncludes: {
+    "/api/**": ["./lib/**"],
+  },
 };
 
 module.exports = nextConfig;
