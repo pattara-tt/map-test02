@@ -1,0 +1,27 @@
+[Unit]
+Description=KMITL MAP (Next.js)
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=kmitlmap
+WorkingDirectory=/opt/kmitlmap
+EnvironmentFile=/opt/kmitlmap/.env.local
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# ผูกกับ localhost เท่านั้น ให้ Nginx เป็นตัวรับจากภายนอก
+Environment=HOSTNAME=127.0.0.1
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+
+# ความปลอดภัยพื้นฐาน
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/kmitlmap
+
+[Install]
+WantedBy=multi-user.target

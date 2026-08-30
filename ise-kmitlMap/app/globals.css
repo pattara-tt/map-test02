@@ -1,0 +1,160 @@
+/* ==== SciMap — design tokens (ธีมสว่างแบบ Google Maps) ==== */
+:root {
+  --gm-blue: #1A73E8;
+  --gm-blue-dark: #1967D2;
+  --gm-blue-soft: #E8F0FE;
+  --gm-green: #188038;
+  --gm-red: #D93025;
+  --gm-text: #202124;
+  --gm-muted: #5F6368;
+  --gm-line: #DADCE0;
+  --gm-bg: #F8F9FA;
+  --bdi-text: #202124;
+  --bdi-text-dim: #5F6368;
+  --bdi-line: #DADCE0;
+  --bdi-nav-h: 64px;
+  --bdi-topbar-h: 54px;
+  --bdi-side-w: 292px;
+}
+
+html, body { background: var(--gm-bg); color: var(--gm-text); }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; margin: 0; }
+* { -webkit-tap-highlight-color: transparent; }
+
+/* ==================================================================
+   App shell — ปรับตามความกว้าง/สูงของหน้าจอผู้ใช้จริง (responsive)
+   data-view="mobile"  → เลย์เอาต์มือถือ (แท็บล่าง + เมนูแบบ drawer)
+   data-view="desktop" → เลย์เอาต์คอม (แถบเมนูด้านซ้ายค้างไว้)
+   ================================================================== */
+.bdi-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  background: var(--gm-bg);
+}
+.bdi-main { flex: 1; position: relative; overflow: hidden; min-width: 0; }
+
+/* ---------- โหมดคอม: เมนูซ้ายค้าง + เนื้อหากว้างเต็มจอ ---------- */
+.bdi-shell[data-view="desktop"] { flex-direction: row; }
+.bdi-side {
+  width: var(--bdi-side-w);
+  flex: none;
+  background: #fff;
+  border-right: 1px solid var(--gm-line);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.bdi-side-body { flex: 1; }
+.bdi-shell[data-view="desktop"] .bdi-nav { display: none; }
+/* จอคอมกว้างมาก → จำกัดความกว้างเนื้อหาให้อ่านง่าย ไม่ยืดจนล้า */
+.bdi-shell[data-view="desktop"] .bdi-page > .bdi-page-inner { max-width: 1120px; margin: 0 auto; }
+
+/* ---------- โหมดมือถือบนจอคอม: แสดงเป็นกรอบโทรศัพท์กลางจอ ---------- */
+@media (min-width: 760px) {
+  body:has(.bdi-shell[data-view="mobile"]) { background: #0e1116; }
+  .bdi-shell[data-view="mobile"] {
+    width: min(430px, 96vw);
+    height: min(932px, 94dvh);
+    margin: 3dvh auto 0;
+    border-radius: 40px;
+    border: 7px solid #1c1c1e;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .55), 0 0 0 1.5px #3a3a3c;
+    overflow: hidden;
+    position: relative;
+  }
+}
+
+/* ==== Top bar ==== */
+.bdi-topbar {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 1500;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top));
+  min-height: var(--bdi-topbar-h); box-sizing: border-box;
+  background: #fff; box-shadow: 0 2px 8px rgba(60, 64, 67, .2);
+}
+.bdi-topbar .bdi-avatar { width: 34px; height: 34px; flex: none; border-radius: 50%; background: var(--gm-blue-soft); border: 2px solid #AECBFA; display: grid; place-items: center; font-size: 17px; }
+.bdi-topbar h1 { margin: 0; font-size: 14px; font-weight: 800; letter-spacing: 1.4px; color: var(--gm-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ==== Bottom navigation (เฉพาะโหมดมือถือ) ==== */
+.bdi-nav {
+  height: var(--bdi-nav-h); flex: none; display: flex; align-items: stretch; justify-content: space-around;
+  background: #fff; border-top: 1px solid var(--gm-line); z-index: 2000; padding-bottom: env(safe-area-inset-bottom);
+}
+.bdi-nav button { flex: 1; min-width: 0; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--gm-muted); font-size: 10px; font-weight: 700; letter-spacing: .6px; }
+.bdi-nav button .ic { display: flex; align-items: center; justify-content: center; min-width: 26px; height: 20px; line-height: 1; padding: 4px 14px; border-radius: 10px; }
+.bdi-nav button.on { color: var(--gm-blue); }
+.bdi-nav button.on .ic { background: var(--gm-blue-soft); }
+
+/* ==== หน้าเนื้อหา ==== */
+.bdi-page {
+  position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: calc(var(--bdi-topbar-h) + 12px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));
+  background: var(--gm-bg); color: var(--gm-text);
+}
+@media (min-width: 900px) { .bdi-page { padding-left: 28px; padding-right: 28px; } }
+
+/* ตารางสถิติ — ปรับจำนวนคอลัมน์ตามความกว้างจอเอง */
+.bdi-stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 12px 0; }
+.bdi-tile { border-radius: 14px; padding: 14px; background: #fff; border: 1px solid var(--gm-line); text-align: center; box-shadow: 0 1px 3px rgba(60, 64, 67, .15); }
+.bdi-tile b { display: block; font-size: clamp(20px, 4.5vw, 28px); color: var(--gm-blue); }
+.bdi-tile span { font-size: 12px; color: var(--gm-muted); }
+
+.bdi-h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 6px; font-size: 15px; font-weight: 800; color: var(--gm-text); }
+.bdi-h3 a { font-size: 12px; color: var(--gm-blue); text-decoration: none; }
+
+/* ==== ปุ่มสลับมุมมอง มือถือ / คอม ==== */
+.bdi-viewswitch { display: flex; gap: 2px; background: #F1F3F4; border-radius: 999px; padding: 3px; flex: none; }
+.bdi-viewswitch button { border: none; background: transparent; cursor: pointer; border-radius: 999px; padding: 5px 9px; font-size: 13px; line-height: 1; color: var(--gm-muted); }
+.bdi-viewswitch button.on { background: #fff; color: var(--gm-blue); box-shadow: 0 1px 3px rgba(60, 64, 67, .25); }
+
+/* ==== แผนที่ ==== */
+.bdi-mapwrap .leaflet-container { background: #fff; }
+
+/* ==== ซ่อนปุ่มลูกศรขึ้น-ลง (spinner) ของช่องตัวเลขและวัน-เวลา ====
+   Firefox/Safari เรนเดอร์ปุ่มพวกนี้ในช่อง date / datetime-local / number
+   ซึ่งไม่มีประโยชน์ในฟอร์มของเรา (ผู้ใช้พิมพ์หรือเลือกจากปฏิทินอยู่แล้ว) */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
+
+/* ครอบคลุมทุก input ไม่ผูกกับ type เพราะบางเบราว์เซอร์ match selector ที่ระบุ type ไม่ติด */
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+input[type="date"], input[type="datetime-local"], input[type="time"] { -moz-appearance: textfield; }
+
+/* ปุ่มปฏิทินให้กดได้ทั้งช่อง ไม่ต้องเล็งไอคอนเล็กๆ */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .65; }
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+/* แถบแท็บหน้าย่อย: เลื่อนแนวนอนได้แต่ไม่ต้องโชว์ scrollbar */
+.bdi-tabs { scrollbar-width: none; -ms-overflow-style: none; }
+.bdi-tabs::-webkit-scrollbar { display: none; }
+
+/* scrollbar ของหน้าเนื้อหาให้บางและกลมกลืน ไม่เป็นแถบหนาๆ ทางขวา */
+.bdi-page { scrollbar-width: thin; scrollbar-color: #DADCE0 transparent; }
+.bdi-page::-webkit-scrollbar { width: 8px; }
+.bdi-page::-webkit-scrollbar-track { background: transparent; }
+.bdi-page::-webkit-scrollbar-thumb { background: #DADCE0; border-radius: 999px; }
+.bdi-page::-webkit-scrollbar-thumb:hover { background: #BDC1C6; }
+
+/* ==== แผงที่ต้องกินพื้นที่เต็มหน้า (เช่น ฝ่ายทะเบียน: แผนที่ + แผงจัดการ) ====
+   .bdi-page เป็น absolute inset:0 จึงมีความสูงแน่นอน — ส่งความสูงต่อลงมาให้ลูกได้
+   ใช้แทนการอิง 100vh ซึ่งจะคำนวณผิดในโหมดจำลองมือถือ (กรอบโทรศัพท์กลางจอ) */
+.bdi-page:has(> .bdi-page-inner > .bdi-fullpanel) { padding-top: calc(var(--bdi-topbar-h) + env(safe-area-inset-top)); padding-bottom: 0; overflow: hidden; }
+.bdi-page > .bdi-page-inner:has(> .bdi-fullpanel) { height: 100%; }
+.bdi-fullpanel { height: 100%; }
